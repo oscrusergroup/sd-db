@@ -24,7 +24,7 @@ jobs:
         run: echo "RELEASE_DATE=$(date -u +%Y-%m-%d)" >> "$GITHUB_ENV"
 
       - name: Zip files
-        run: git archive --format=zip --output "${RELEASE_DATE}.zip" HEAD -- . ':!.github'
+        run: git archive --format=zip --output sd.zip HEAD -- . ':!.github'
 
       - name: Publish release
         env:
@@ -32,7 +32,7 @@ jobs:
         run: |
           # Replace any release already made today so the latest files win
           gh release delete "$RELEASE_DATE" --cleanup-tag --yes || true
-          gh release create "$RELEASE_DATE" "${RELEASE_DATE}.zip" \
+          gh release create "$RELEASE_DATE" sd.zip \
             --title "$RELEASE_DATE" \
             --target "$GITHUB_SHA" \
             --notes "Snapshot of all files as of commit ${GITHUB_SHA::7}."
