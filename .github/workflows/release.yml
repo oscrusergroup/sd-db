@@ -1,0 +1,38 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - ".github/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set release date
+        run: echo "RELEASE_DATE=$(date -u +%Y-%m-%d)" >> "$GITHUB_ENV"
+
+      - name: Zip files
+        run: git archive --format=zip --output "${RELEASE_DATE}.zip" HEAD -- . ':!.github'
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Replace any release already made today so the latest files win
+          gh release delete "$RELEASE_DATE" --cleanup-tag --yes || true
+          gh release create "$RELEASE_DATE" "${RELEASE_DATE}.zip" \
+            --title "$RELEASE_DATE" \
+            --target "$GITHUB_SHA" \
+            --notes "Snapshot of all files as of commit ${GITHUB_SHA::7}."
